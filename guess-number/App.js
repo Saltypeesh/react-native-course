@@ -1,21 +1,40 @@
-import { ImageBackground, StyleSheet, SafeAreaView } from "react-native";
+import {
+  ImageBackground,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 import StartGameScreen from "./screens/StartGameScreen";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import GameScreen from "./screens/GameScreen";
 import Colors from "./constants/colors";
 import GameOverScreen from "./screens/GameOverScreen";
+import { useFonts } from "expo-font";
+import AppLoading from "expo-app-loading";
 
 export default function App() {
   const [userNumber, setUserNumber] = useState();
   const [gameIsOver, setGameIsOver] = useState(true);
+  const [guessRounds, setGuessRounds] = useState(0);
+
+  const [fontsLoaded] = useFonts({
+    "open-sans": require("./assets/fonts/OpenSans-Regular.ttf"),
+    "open-sans-bold": require("./assets/fonts/OpenSans-Bold.ttf"),
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
 
   function pickedNumberHandler(pickedNumber) {
     setUserNumber(pickedNumber);
+    setGameIsOver(false);
   }
 
-  function gameOverHandler() {
-    setGameIsOver(true);
+  function startNewGameHandler() {
+    setUserNumber(null);
+    setGuessRounds(0);
   }
 
   let screen = <StartGameScreen onPickNumber={pickedNumberHandler} />;
@@ -26,12 +45,19 @@ export default function App() {
     );
   }
 
-  if (gameIsOver) {
-    screen = <GameOverScreen />;
+  if (gameIsOver && userNumber) {
+    screen = (
+      <GameOverScreen
+        roundsNumber={guessRounds}
+        userNumber={userNumber}
+        onStartNewGame={startNewGameHandler}
+      />
+    );
   }
 
-  function gameOverHandler() {
+  function gameOverHandler(numberOrRounds) {
     setGameIsOver(true);
+    setGuessRounds(numberOrRounds);
   }
 
   return (
@@ -45,7 +71,7 @@ export default function App() {
         style={styles.rootScreen}
         imageStyle={styles.backgroundImage}
       >
-        <SafeAreaView style={styles.rootScreen}>{screen}</SafeAreaView>
+        <SafeAreaView style={styles.safeAreaView}>{screen}</SafeAreaView>
       </ImageBackground>
     </LinearGradient>
   );
@@ -54,6 +80,10 @@ export default function App() {
 const styles = StyleSheet.create({
   rootScreen: {
     flex: 1,
+  },
+  safeAreaView: {
+    flex: 1,
+    paddingTop: StatusBar.currentHeight,
   },
   backgroundImage: {
     opacity: 0.15,
